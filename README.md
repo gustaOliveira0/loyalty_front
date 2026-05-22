@@ -1,5 +1,42 @@
-# Vue 3 + Vite
+# Loyalty Frontend
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+Frontend do sistema de programa de fidelidade, desenvolvido com Vue 3 Composition API.
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## Stack
+
+- Vue 3 (Composition API)
+- Vite
+- Pinia (state management)
+- Vue Router 4
+- Axios
+- qrcode (geração de QR Code)
+
+## Funcionalidades
+
+- Autenticação (login / cadastro)
+- Dashboard com resumo de vendas e clientes
+- Gestão de clientes com créditos
+- Registro de vendas (créditos calculados automaticamente)
+- Catálogo de produtos por categoria
+- Regras de crédito configuráveis
+- Geração e download de QR Code para cadastro de clientes
+- Formulário público de auto-cadastro via QR Code (mobile-first)
+
+## Setup
+
+```bash
+cp .env.example .env
+# Edite o .env com a URL do backend
+npm install
+npm run dev
+```
+
+## Variáveis de ambiente
+
+```
+VITE_API_URL=http://localhost:3000/api/v1
+```
+
+## Backend
+
+Requer o loyalty_backend rodando na porta 3000.
