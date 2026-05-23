@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../../api/index.js'
+import { formatCPF, formatPhone, onlyDigits } from '../../utils/format.js'
 
 const route = useRoute()
 const storeId = route.params.storeId
@@ -22,6 +23,11 @@ const form = ref({
   birth_date: '',
 })
 
+// LGPD (Art. 7, I / Art. 8) — consentimento livre, informado e inequívoco.
+// O envio só é permitido com a caixa marcada e o valor vai ao backend.
+const consent = ref(false)
+const showPrivacy = ref(false)
+
 onMounted(async () => {
   try {
     const { data } = await api.get(`/public/store/${storeId}`)
@@ -32,23 +38,6 @@ onMounted(async () => {
     loadingStore.value = false
   }
 })
-
-function formatCPF(value) {
-  return value
-    .replace(/\D/g, '')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
-    .substring(0, 14)
-}
-
-function formatPhone(value) {
-  return value
-    .replace(/\D/g, '')
-    .replace(/(\d{2})(\d)/, '($1) $2')
-    .replace(/(\d{5})(\d)/, '$1-$2')
-    .substring(0, 15)
-}
 
 function onCPFInput(e) {
   form.value.cpf = formatCPF(e.target.value)
@@ -65,9 +54,10 @@ async function submit() {
     const payload = {
       store_id: storeId,
       name: form.value.name,
-      cpf: form.value.cpf.replace(/\D/g, ''),
-      phone_number: form.value.phone_number.replace(/\D/g, ''),
+      cpf: onlyDigits(form.value.cpf),
+      phone_number: onlyDigits(form.value.phone_number),
       birth_date: form.value.birth_date,
+      consent: consent.value,
     }
     const { data } = await api.post('/public/customers', payload)
     successMessage.value = data.message
@@ -166,14 +156,40 @@ async function submit() {
             />
           </div>
 
-          <button type="submit" class="pub-btn" :disabled="saving">
+          <!-- LGPD — consentimento obrigatório, livre e informado (Art. 7, I / Art. 8) -->
+          <label class="pub-consent">
+            <input type="checkbox" v-model="consent" />
+            <span>
+              Li e concordo com o tratamento dos meus dados pessoais conforme a
+              <button type="button" class="pub-link" @click="showPrivacy = !showPrivacy">
+                Política de Privacidade
+              </button>.
+            </span>
+          </label>
+
+          <div v-if="showPrivacy" class="pub-policy">
+            <p><strong>Controlador:</strong> {{ storeName }} (estabelecimento responsável).</p>
+            <p><strong>Finalidade:</strong> cadastro e operação do programa de fidelidade —
+              identificar você nas compras, acumular e resgatar pontos e enviar comunicações
+              sobre benefícios.</p>
+            <p><strong>Dados coletados:</strong> nome, CPF, telefone e data de nascimento.</p>
+            <p><strong>Base legal:</strong> seu consentimento (LGPD, Art. 7, I).</p>
+            <p><strong>Compartilhamento:</strong> seus dados não são vendidos nem compartilhados
+              com terceiros para fins de marketing.</p>
+            <p><strong>Seus direitos (Art. 18):</strong> você pode, a qualquer momento, solicitar
+              acesso, correção, portabilidade ou exclusão dos seus dados e revogar este
+              consentimento, entrando em contato com o estabelecimento.</p>
+          </div>
+
+          <button type="submit" class="pub-btn" :disabled="saving || !consent">
             <span v-if="saving" class="spinner" style="width:20px;height:20px;border-color:rgba(255,255,255,.3);border-top-color:#fff" />
             <span v-else>Cadastrar e ganhar pontos</span>
           </button>
         </form>
 
         <p class="pub-privacy">
-          Seus dados são usados exclusivamente para o programa de fidelidade e nunca serão compartilhados.
+          Tratamos seus dados exclusivamente para o programa de fidelidade, com base no seu
+          consentimento. Você pode revogá-lo e solicitar a exclusão dos seus dados a qualquer momento.
         </p>
       </template>
     </div>
@@ -275,6 +291,26 @@ async function submit() {
 }
 .pub-btn:disabled { opacity: .7; cursor: not-allowed; }
 .pub-btn:not(:disabled):hover { opacity: .92; }
+
+.pub-consent {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 12px; color: var(--text-medium); line-height: 1.5;
+  margin-top: 4px; cursor: pointer;
+}
+.pub-consent input { margin-top: 2px; width: 16px; height: 16px; flex-shrink: 0; accent-color: var(--red-600); }
+
+.pub-link {
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--red-600); font: inherit; font-weight: 600;
+  text-decoration: underline;
+}
+
+.pub-policy {
+  background: var(--cream-100); border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 12px; color: var(--text-medium);
+  line-height: 1.55; display: flex; flex-direction: column; gap: 6px;
+}
+.pub-policy strong { color: var(--text-dark); }
 
 .pub-privacy {
   font-size: 11px; color: var(--text-muted);

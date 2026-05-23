@@ -106,20 +106,27 @@ a { text-decoration: none; color: inherit; }
 .page-header-text p { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
 /* ─── Cards ────────────────────────────────── */
-.card { background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--cream-200); box-shadow: var(--shadow-sm); }
+.card { background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--cream-200); box-shadow: var(--shadow-sm); min-width: 0; }
 .card-body { padding: 20px; }
 .card-header { padding: 16px 20px; border-bottom: 1px solid var(--cream-200); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .card-header h3 { font-size: 15px; font-weight: 600; color: var(--text-dark); }
 
 .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px; }
-.stat-card { background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--cream-200); padding: 18px 20px; box-shadow: var(--shadow-sm); }
+.stat-card { background: var(--white); border-radius: var(--radius-md); border: 1px solid var(--cream-200); padding: 18px 20px; box-shadow: var(--shadow-sm); min-width: 0; }
 .stat-card.primary { background: var(--red-600); border-color: var(--red-700); }
 .stat-card.primary .stat-label { color: rgba(255,255,255,.75); }
 .stat-card.primary .stat-value { color: var(--white); }
 .stat-card.primary .stat-sub { color: rgba(255,255,255,.6); }
 .stat-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-.stat-value { font-size: 28px; font-weight: 800; color: var(--text-dark); line-height: 1; }
+.stat-value { font-size: 28px; font-weight: 800; color: var(--text-dark); line-height: 1.1; overflow-wrap: break-word; }
 .stat-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* Mobile: shrink the big stat numbers so long currency values fit the cards */
+@media (max-width: 600px) {
+  .stats-grid { gap: 12px; }
+  .stat-card { padding: 15px 16px; }
+  .stat-value { font-size: 22px; }
+}
 
 /* ─── Buttons ──────────────────────────────── */
 .btn {

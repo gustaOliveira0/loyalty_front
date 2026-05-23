@@ -23,10 +23,14 @@ const routes = [
 
 const router = createRouter({ history: createWebHistory(), routes })
 
-router.beforeEach((to) => {
+// Exported as a pure function so it can be unit tested in isolation.
+// Returns a redirect path (string) or undefined to allow navigation.
+export function navigationGuard(to) {
   const token = localStorage.getItem('token')
   if (!to.meta.public && !token) return '/login'
   if (to.meta.public && token && (to.path === '/login' || to.path === '/register')) return '/dashboard'
-})
+}
+
+router.beforeEach(navigationGuard)
 
 export default router
