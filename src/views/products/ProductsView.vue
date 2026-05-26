@@ -4,6 +4,7 @@ import api from '../../api/index.js'
 
 const products = ref([])
 const categories = ref([])
+const storeSettings = ref({ cashback_kind: 'points', unit_label: 'pts' })
 const loading = ref(true)
 const search = ref('')
 const filterCategory = ref('')
@@ -13,7 +14,7 @@ const editing = ref(null)
 const deleting = ref(null)
 const saving = ref(false)
 const error = ref('')
-const form = ref({ name: '', value: '', description: '', category_id: '' })
+const form = ref({ name: '', value: '', description: '', category_id: '', cashback_mode: 'percent', cashback_value: '' })
 
 const filtered = computed(() => {
   let list = products.value
@@ -23,12 +24,35 @@ const filtered = computed(() => {
   return list
 })
 
+const cashbackPreview = computed(() => {
+  const val = Number(form.value.cashback_value || 0)
+  const price = Number(form.value.value || 0)
+  if (!val) return ''
+  if (form.value.cashback_mode === 'percent') {
+    const amt = (price * val / 100)
+    return `≈ ${formatUnit(amt)} por unidade`
+  }
+  return `${formatUnit(val)} por unidade`
+})
+
+function formatUnit(v) {
+  if (storeSettings.value.cashback_kind === 'money') {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
+  }
+  return `${Math.floor(v)} pts`
+}
+
 async function load() {
   loading.value = true
   try {
-    const [p, c] = await Promise.all([api.get('/products'), api.get('/categories')])
+    const [p, c, s] = await Promise.all([
+      api.get('/products'),
+      api.get('/categories'),
+      api.get('/store_settings')
+    ])
     products.value = p.data
     categories.value = c.data
+    storeSettings.value = s.data
   } finally {
     loading.value = false
   }
@@ -36,14 +60,19 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', value: '', description: '', category_id: categories.value[0]?.id || '' }
+  form.value = { name: '', value: '', description: '', category_id: categories.value[0]?.id || '', cashback_mode: 'percent', cashback_value: '' }
   error.value = ''
   showModal.value = true
 }
 
 function openEdit(p) {
   editing.value = p
-  form.value = { name: p.name, value: p.value, description: p.description || '', category_id: p.category_id }
+  form.value = {
+    name: p.name, value: p.value, description: p.description || '',
+    category_id: p.category_id,
+    cashback_mode: p.cashback_mode || 'percent',
+    cashback_value: p.cashback_value ?? ''
+  }
   error.value = ''
   showModal.value = true
 }
@@ -52,7 +81,14 @@ async function save() {
   error.value = ''
   saving.value = true
   try {
-    const payload = { name: form.value.name, value: form.value.value, description: form.value.description, category_id: form.value.category_id }
+    const payload = {
+      name: form.value.name,
+      value: form.value.value,
+      description: form.value.description,
+      category_id: form.value.category_id,
+      cashback_mode: form.value.cashback_mode,
+      cashback_value: form.value.cashback_value || 0
+    }
     if (editing.value) {
       await api.patch(`/products/${editing.value.id}`, payload)
     } else {
@@ -81,6 +117,12 @@ function formatCurrency(v) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v)
 }
 
+function cashbackLabel(p) {
+  if (!p.cashback_value) return '—'
+  if (p.cashback_mode === 'percent') return `${p.cashback_value}%`
+  return formatUnit(p.cashback_value)
+}
+
 onMounted(load)
 </script>
 
@@ -89,7 +131,7 @@ onMounted(load)
     <div class="page-header">
       <div class="page-header-text">
         <h2>Produtos</h2>
-        <p>Gerencie seu catálogo de produtos</p>
+        <p>Gerencie seu catálogo e o cashback de cada produto</p>
       </div>
       <button class="btn btn-primary" @click="openCreate" :disabled="categories.length === 0">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -125,13 +167,14 @@ onMounted(load)
       <div v-else class="table-wrap">
         <table>
           <thead>
-            <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Descrição</th><th>Ações</th></tr>
+            <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Cashback</th><th>Descrição</th><th>Ações</th></tr>
           </thead>
           <tbody>
             <tr v-for="p in filtered" :key="p.id">
               <td><strong>{{ p.name }}</strong></td>
               <td><span class="badge badge-blue">{{ p.category_name }}</span></td>
               <td><strong style="color:var(--red-700)">{{ formatCurrency(p.value) }}</strong></td>
+              <td><span class="credits-pill">{{ cashbackLabel(p) }}</span></td>
               <td style="color:var(--text-muted);font-size:13px">{{ p.description || '—' }}</td>
               <td>
                 <div class="action-group">
@@ -172,6 +215,36 @@ onMounted(load)
                 </select>
               </div>
             </div>
+
+            <div class="form-group">
+              <label class="form-label">Tipo de cashback</label>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" value="percent" v-model="form.cashback_mode" />
+                  Percentual (%)
+                </label>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                  <input type="radio" value="fixed" v-model="form.cashback_mode" />
+                  Fixo ({{ storeSettings.cashback_kind === 'money' ? 'R$' : 'pontos' }})
+                </label>
+              </div>
+              <small style="color:var(--text-muted);font-size:12px">
+                Sua loja credita cashback em <strong>{{ storeSettings.cashback_kind === 'money' ? 'dinheiro' : 'pontos' }}</strong>.
+                <RouterLink to="/settings" style="color:var(--red-700)">Alterar</RouterLink>
+              </small>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">
+                  Valor do cashback {{ form.cashback_mode === 'percent' ? '(%)' : (storeSettings.cashback_kind === 'money' ? '(R$)' : '(pts)') }}
+                </label>
+                <input v-model="form.cashback_value" type="number" step="0.01" min="0" class="form-input" placeholder="0" />
+                <small v-if="cashbackPreview" style="color:var(--text-muted);font-size:12px">{{ cashbackPreview }}</small>
+              </div>
+              <div class="form-group" />
+            </div>
+
             <div class="form-group">
               <label class="form-label">Descrição</label>
               <textarea v-model="form.description" class="form-textarea" placeholder="Descrição opcional..." />

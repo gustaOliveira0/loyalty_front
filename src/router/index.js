@@ -11,10 +11,12 @@ const routes = [
       { path: '', redirect: '/dashboard' },
       { path: 'dashboard', component: () => import('../views/DashboardView.vue') },
       { path: 'customers', component: () => import('../views/customers/CustomersView.vue') },
+      { path: 'customers/:id', component: () => import('../views/customers/CustomerDetailView.vue') },
       { path: 'sales', component: () => import('../views/sales/SalesView.vue') },
       { path: 'products', component: () => import('../views/products/ProductsView.vue') },
       { path: 'categories', component: () => import('../views/categories/CategoriesView.vue') },
       { path: 'credit-rules', component: () => import('../views/credit-rules/CreditRulesView.vue') },
+      { path: 'settings', component: () => import('../views/settings/StoreSettingsView.vue') },
       { path: 'qrcode', component: () => import('../views/qrcode/QRCodeView.vue') },
     ]
   },

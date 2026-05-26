@@ -1,8 +1,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../../api/index.js'
 
+const router = useRouter()
 const customers = ref([])
+const storeSettings = ref({ cashback_kind: 'points' })
 const loading = ref(true)
 const search = ref('')
 const showModal = ref(false)
@@ -12,7 +15,7 @@ const deleting = ref(null)
 const saving = ref(false)
 const error = ref('')
 
-const form = ref({ name: '', birth_date: '', phone_number: '', cpf: '' })
+const form = ref({ name: '', birth_date: '', phone_number: '', cpf: '', whatsapp_opt_in: true })
 
 const filtered = computed(() => {
   const q = search.value.toLowerCase()
@@ -25,8 +28,9 @@ const filtered = computed(() => {
 async function load() {
   loading.value = true
   try {
-    const { data } = await api.get('/customers')
-    customers.value = data
+    const [c, s] = await Promise.all([api.get('/customers'), api.get('/store_settings')])
+    customers.value = c.data
+    storeSettings.value = s.data
   } finally {
     loading.value = false
   }
@@ -34,14 +38,20 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', birth_date: '', phone_number: '', cpf: '' }
+  form.value = { name: '', birth_date: '', phone_number: '', cpf: '', whatsapp_opt_in: true }
   error.value = ''
   showModal.value = true
 }
 
 function openEdit(c) {
   editing.value = c
-  form.value = { name: c.name, birth_date: c.birth_date?.substring(0,10) || '', phone_number: c.phone_number || '', cpf: c.cpf || '' }
+  form.value = {
+    name: c.name,
+    birth_date: c.birth_date?.substring(0,10) || '',
+    phone_number: c.phone_number || '',
+    cpf: c.cpf || '',
+    whatsapp_opt_in: c.whatsapp_opt_in !== false
+  }
   error.value = ''
   showModal.value = true
 }
@@ -90,6 +100,17 @@ function formatPhone(p) {
   return p.replace(/(\d{2})(\d{4,5})(\d{4})/, '($1) $2-$3')
 }
 
+function formatBalance(v) {
+  if (storeSettings.value.cashback_kind === 'money') {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
+  }
+  return `${Math.floor(v || 0)} pts`
+}
+
+function viewStatement(c) {
+  router.push(`/customers/${c.id}`)
+}
+
 onMounted(load)
 </script>
 
@@ -98,7 +119,7 @@ onMounted(load)
     <div class="page-header">
       <div class="page-header-text">
         <h2>Clientes</h2>
-        <p>Gerencie seus clientes e créditos</p>
+        <p>Gerencie clientes e veja o extrato de fidelidade</p>
       </div>
       <button class="btn btn-primary" @click="openCreate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -127,18 +148,19 @@ onMounted(load)
         <table>
           <thead>
             <tr>
-              <th>Nome</th><th>CPF</th><th>Telefone</th><th>Nascimento</th><th>Créditos</th><th>Ações</th>
+              <th>Nome</th><th>CPF</th><th>Telefone</th><th>Nascimento</th><th>Saldo</th><th>Ações</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="c in filtered" :key="c.id">
-              <td><strong>{{ c.name }}</strong></td>
+              <td><strong style="cursor:pointer" @click="viewStatement(c)">{{ c.name }}</strong></td>
               <td>{{ c.cpf || '—' }}</td>
               <td>{{ formatPhone(c.phone_number) }}</td>
               <td>{{ formatDate(c.birth_date) }}</td>
-              <td><span class="credits-pill">{{ c.available_credits }} pts</span></td>
+              <td><span class="credits-pill">{{ formatBalance(c.available_credits) }}</span></td>
               <td>
                 <div class="action-group">
+                  <button class="btn btn-ghost btn-sm" @click="viewStatement(c)">Extrato</button>
                   <button class="btn btn-ghost btn-sm" @click="openEdit(c)">Editar</button>
                   <button class="btn btn-danger btn-sm" @click="openDelete(c)">Remover</button>
                 </div>
@@ -149,7 +171,6 @@ onMounted(load)
       </div>
     </div>
 
-    <!-- Create/Edit Modal -->
     <Teleport to="body">
       <div v-if="showModal" class="modal-backdrop" @click.self="showModal = false">
         <div class="modal">
@@ -179,6 +200,12 @@ onMounted(load)
               <label class="form-label">Data de Nascimento</label>
               <input v-model="form.birth_date" type="date" class="form-input" />
             </div>
+            <div class="form-group">
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" v-model="form.whatsapp_opt_in" />
+                Aceita receber avisos por WhatsApp (cashback recebido, expirando, etc.)
+              </label>
+            </div>
           </div>
           <div class="modal-footer">
             <button class="btn btn-ghost" @click="showModal = false">Cancelar</button>
@@ -191,7 +218,6 @@ onMounted(load)
       </div>
     </Teleport>
 
-    <!-- Delete Modal -->
     <Teleport to="body">
       <div v-if="showDeleteModal" class="modal-backdrop" @click.self="showDeleteModal = false">
         <div class="modal" style="max-width:360px">

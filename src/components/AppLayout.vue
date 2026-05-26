@@ -15,7 +15,7 @@ const navItems = [
   { label: 'Vendas', path: '/sales', icon: 'shopping-cart' },
   { label: 'Produtos', path: '/products', icon: 'package' },
   { label: 'Categorias', path: '/categories', icon: 'tag' },
-  { label: 'Regras de Crédito', path: '/credit-rules', icon: 'star' },
+  { label: 'Configurações', path: '/settings', icon: 'star' },
   { label: 'Meu QR Code', path: '/qrcode', icon: 'qrcode' },
 ]
 
