@@ -56,6 +56,27 @@ function kindClass(kind) {
   }[kind] || 'badge badge-gray'
 }
 
+function templateLabel(t) {
+  return {
+    cashback_received: 'Cashback recebido',
+    cashback_expiring: 'Cashback expirando',
+    cashback_balance: 'Aviso de saldo'
+  }[t] || t
+}
+
+function statusLabel(s) {
+  return { queued: 'Na fila', sent: 'Enviada', failed: 'Falhou', skipped: 'Pulada' }[s] || s
+}
+
+function statusClass(s) {
+  return {
+    sent: 'badge badge-blue',
+    queued: 'badge badge-gray',
+    failed: 'badge badge-gray',
+    skipped: 'badge badge-gray'
+  }[s] || 'badge badge-gray'
+}
+
 async function doRedeem() {
   redeemError.value = ''
   redeeming.value = true
@@ -134,7 +155,7 @@ onMounted(load)
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" style="margin-bottom:20px">
         <div class="card-header"><h3 style="margin:0;font-size:16px">Movimentações</h3></div>
         <div v-if="data.transactions.length === 0" class="empty-state"><p>Sem movimentações</p></div>
         <div v-else class="table-wrap">
@@ -152,6 +173,35 @@ onMounted(load)
                   <strong :style="{ color: t.amount >= 0 ? 'var(--red-700)' : 'var(--text-medium)' }">
                     {{ t.amount >= 0 ? '+' : '' }}{{ formatAmount(t.amount) }}
                   </strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h3 style="margin:0;font-size:16px">Mensagens enviadas</h3>
+          <span v-if="!data.customer.whatsapp_opt_in" class="badge badge-gray" style="margin-left:8px">Opt-in desligado</span>
+        </div>
+        <div v-if="(data.messages || []).length === 0" class="empty-state">
+          <p>{{ data.customer.whatsapp_opt_in ? 'Sem mensagens enviadas ainda' : 'Cliente optou por não receber mensagens' }}</p>
+        </div>
+        <div v-else class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Tipo</th><th>Canal</th><th>Status</th><th>Quando</th><th>Mensagem</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="m in data.messages" :key="m.id">
+                <td><span class="badge badge-blue">{{ templateLabel(m.template) }}</span></td>
+                <td style="text-transform:uppercase;font-size:12px;color:var(--text-medium)">{{ m.channel }}</td>
+                <td><span :class="statusClass(m.status)">{{ statusLabel(m.status) }}</span></td>
+                <td>{{ formatDateTime(m.sent_at || m.created_at) }}</td>
+                <td style="color:var(--text-medium);font-size:13px;max-width:380px">
+                  {{ m.body }}
+                  <div v-if="m.error" style="color:var(--red-700);font-size:11px;margin-top:4px">Erro: {{ m.error }}</div>
                 </td>
               </tr>
             </tbody>
