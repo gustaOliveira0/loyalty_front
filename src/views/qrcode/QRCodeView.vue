@@ -15,7 +15,7 @@ const qrSize = ref(300)
 
 onMounted(async () => {
   try {
-    const { data } = await api.get('api/v1/qrcode')
+    const { data } = await api.get('/qrcode')
     registrationUrl.value = data.url
     storeName.value = data.store_name
     await generateQR(data.url)
