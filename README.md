@@ -34,7 +34,7 @@ npm run dev
 ## Variáveis de ambiente
 
 ```
-VITE_API_URL=https://loyalty-front-gray.vercel.app/api/v1
+VITE_API_URL=http://108.174.151.220/api/v1
 ```
 
 ## Backend
