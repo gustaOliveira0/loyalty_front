@@ -39,4 +39,3 @@ VITE_API_URL=http://108.174.151.220/api/v1
 
 ## Backend
 
-Requer o loyalty_backend rodando na porta 3000.
