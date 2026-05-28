@@ -20,7 +20,7 @@ onMounted(async () => {
     storeName.value = data.store_name
     await generateQR(data.url)
   } catch (e) {
-    error.value = 'Erro ao gerar QR Code. Verifique a conexão com o servidor.'
+    error.value = 'Erro ao gerar QR Code.'
   } finally {
     loading.value = false
   }
