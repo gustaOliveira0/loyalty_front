@@ -33,7 +33,7 @@ describe('CustomerRegisterView', () => {
 
   it('fetches and shows the store name', async () => {
     const wrapper = await mountView()
-    expect(api.get).toHaveBeenCalledWith('/public/store/7')
+    expect(api.get).toHaveBeenCalledWith('api/v1/public/store/7')
     expect(wrapper.text()).toContain('Loja Teste')
   })
 
@@ -53,7 +53,7 @@ describe('CustomerRegisterView', () => {
     await wrapper.get('form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(api.post).toHaveBeenCalledWith('/public/customers', {
+    expect(api.post).toHaveBeenCalledWith('api/v1/public/customers', {
       store_id: '7',
       name: 'João da Silva',
       cpf: '52998224725',
