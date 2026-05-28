@@ -31,7 +31,7 @@ describe('auth store', () => {
 
       await store.login('loja@x.com', 'secret')
 
-      expect(api.post).toHaveBeenCalledWith('api/v1/auth/login', {
+      expect(api.post).toHaveBeenCalledWith('/api/v1/auth/login', {
         email: 'loja@x.com',
         password: 'secret',
       })
