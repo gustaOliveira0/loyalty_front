@@ -131,6 +131,32 @@ onMounted(load)
         </div>
       </div>
 
+      <div v-if="(data.redeemable_products || []).length > 0" class="card" style="margin-bottom:20px;border:2px solid var(--red-200)">
+        <div class="card-header" style="background:var(--red-50)">
+          <h3 style="margin:0;font-size:16px;color:var(--red-700)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-2px;margin-right:6px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Produtos disponíveis para resgatar
+          </h3>
+          <span class="badge badge-blue">{{ data.redeemable_products.length }} produto{{ data.redeemable_products.length !== 1 ? 's' : '' }}</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Pontos necessários</th><th>Saldo do cliente</th></tr>
+            </thead>
+            <tbody>
+              <tr v-for="p in data.redeemable_products" :key="p.id">
+                <td><strong>{{ p.name }}</strong><div v-if="p.description" style="font-size:12px;color:var(--text-muted)">{{ p.description }}</div></td>
+                <td><span class="badge badge-blue">{{ p.category_name }}</span></td>
+                <td style="color:var(--text-medium)">{{ new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value) }}</td>
+                <td><span class="credits-pill">{{ Math.floor(p.redeem_points) }} pts</span></td>
+                <td><span class="credits-pill" style="background:var(--red-100);color:var(--red-700)">{{ formatAmount(data.balance) }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:20px">
         <div class="card-header"><h3 style="margin:0;font-size:16px">Compras</h3></div>
         <div v-if="data.purchases.length === 0" class="empty-state"><p>Sem compras registradas</p></div>

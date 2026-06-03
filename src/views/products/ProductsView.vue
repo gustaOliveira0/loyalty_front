@@ -14,7 +14,7 @@ const editing = ref(null)
 const deleting = ref(null)
 const saving = ref(false)
 const error = ref('')
-const form = ref({ name: '', value: '', description: '', category_id: '', cashback_mode: 'percent', cashback_value: '' })
+const form = ref({ name: '', value: '', description: '', category_id: '', cashback_mode: 'percent', cashback_value: '', redeem_points: '' })
 
 const filtered = computed(() => {
   let list = products.value
@@ -60,7 +60,7 @@ async function load() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', value: '', description: '', category_id: categories.value[0]?.id || '', cashback_mode: 'percent', cashback_value: '' }
+  form.value = { name: '', value: '', description: '', category_id: categories.value[0]?.id || '', cashback_mode: 'percent', cashback_value: '', redeem_points: '' }
   error.value = ''
   showModal.value = true
 }
@@ -71,7 +71,8 @@ function openEdit(p) {
     name: p.name, value: p.value, description: p.description || '',
     category_id: p.category_id,
     cashback_mode: p.cashback_mode || 'percent',
-    cashback_value: p.cashback_value ?? ''
+    cashback_value: p.cashback_value ?? '',
+    redeem_points: p.redeem_points ?? ''
   }
   error.value = ''
   showModal.value = true
@@ -87,7 +88,8 @@ async function save() {
       description: form.value.description,
       category_id: form.value.category_id,
       cashback_mode: form.value.cashback_mode,
-      cashback_value: form.value.cashback_value || 0
+      cashback_value: form.value.cashback_value || 0,
+      redeem_points: form.value.redeem_points || 0
     }
     if (editing.value) {
       await api.patch(`/products/${editing.value.id}`, payload)
@@ -167,7 +169,7 @@ onMounted(load)
       <div v-else class="table-wrap">
         <table>
           <thead>
-            <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Cashback</th><th>Descrição</th><th>Ações</th></tr>
+            <tr><th>Nome</th><th>Categoria</th><th>Preço</th><th>Cashback</th><th>Pontos p/ resgatar</th><th>Descrição</th><th>Ações</th></tr>
           </thead>
           <tbody>
             <tr v-for="p in filtered" :key="p.id">
@@ -175,6 +177,10 @@ onMounted(load)
               <td><span class="badge badge-blue">{{ p.category_name }}</span></td>
               <td><strong style="color:var(--red-700)">{{ formatCurrency(p.value) }}</strong></td>
               <td><span class="credits-pill">{{ cashbackLabel(p) }}</span></td>
+              <td>
+                <span v-if="p.redeem_points > 0" class="credits-pill">{{ Math.floor(p.redeem_points) }} pts</span>
+                <span v-else style="color:var(--text-muted)">—</span>
+              </td>
               <td style="color:var(--text-muted);font-size:13px">{{ p.description || '—' }}</td>
               <td>
                 <div class="action-group">
@@ -243,6 +249,12 @@ onMounted(load)
                 <small v-if="cashbackPreview" style="color:var(--text-muted);font-size:12px">{{ cashbackPreview }}</small>
               </div>
               <div class="form-group" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Pontos necessários para resgatar</label>
+              <input v-model="form.redeem_points" type="number" step="1" min="0" class="form-input" placeholder="0" />
+              <small style="color:var(--text-muted);font-size:12px">Quantos pontos o cliente precisa ter acumulados para resgatar este produto. Deixe 0 para não permitir resgate.</small>
             </div>
 
             <div class="form-group">
