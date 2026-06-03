@@ -131,29 +131,54 @@ onMounted(load)
         </div>
       </div>
 
-      <div v-if="(data.redeemable_products || []).length > 0" class="card" style="margin-bottom:20px;border:2px solid var(--red-200)">
-        <div class="card-header" style="background:var(--red-50)">
-          <h3 style="margin:0;font-size:16px;color:var(--red-700)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-2px;margin-right:6px"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            Produtos disponíveis para resgatar
+      <div v-if="(data.redeemable_products || []).length > 0" class="card" style="margin-bottom:20px">
+        <div class="card-header">
+          <h3 style="margin:0;font-size:16px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" style="vertical-align:-3px;margin-right:6px;color:var(--red-600)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Produtos para resgatar
           </h3>
-          <span class="badge badge-blue">{{ data.redeemable_products.length }} produto{{ data.redeemable_products.length !== 1 ? 's' : '' }}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="badge badge-blue">{{ data.redeemable_products.filter(p => p.can_redeem).length }} disponíve{{ data.redeemable_products.filter(p => p.can_redeem).length !== 1 ? 'is' : 'l' }}</span>
+            <span class="badge badge-gray">{{ data.redeemable_products.length }} total</span>
+          </div>
         </div>
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Produto</th><th>Categoria</th><th>Preço</th><th>Pontos necessários</th><th>Saldo do cliente</th></tr>
-            </thead>
-            <tbody>
-              <tr v-for="p in data.redeemable_products" :key="p.id">
-                <td><strong>{{ p.name }}</strong><div v-if="p.description" style="font-size:12px;color:var(--text-muted)">{{ p.description }}</div></td>
-                <td><span class="badge badge-blue">{{ p.category_name }}</span></td>
-                <td style="color:var(--text-medium)">{{ new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.value) }}</td>
-                <td><span class="credits-pill">{{ Math.floor(p.redeem_points) }} pts</span></td>
-                <td><span class="credits-pill" style="background:var(--red-100);color:var(--red-700)">{{ formatAmount(data.balance) }}</span></td>
-              </tr>
-            </tbody>
-          </table>
+        <div style="padding:16px 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+          <div
+            v-for="p in data.redeemable_products"
+            :key="p.id"
+            :style="{
+              border: p.can_redeem ? '2px solid var(--red-400)' : '1px solid var(--cream-200)',
+              borderRadius: '10px',
+              padding: '14px 16px',
+              background: p.can_redeem ? 'var(--red-50)' : 'var(--white)',
+              position: 'relative',
+              opacity: p.can_redeem ? 1 : 0.75
+            }"
+          >
+            <div v-if="p.can_redeem" style="position:absolute;top:10px;right:10px">
+              <span style="background:var(--red-600);color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px">DISPONÍVEL</span>
+            </div>
+            <div style="font-weight:700;font-size:14px;color:var(--text-dark);margin-bottom:4px;padding-right:80px">{{ p.name }}</div>
+            <div style="margin-bottom:10px">
+              <span class="badge badge-blue" style="font-size:11px">{{ p.category_name }}</span>
+            </div>
+            <div v-if="p.description" style="font-size:12px;color:var(--text-muted);margin-bottom:10px">{{ p.description }}</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+              <div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Necessário</div>
+                <span class="credits-pill" :style="{ background: p.can_redeem ? 'var(--red-600)' : undefined, color: p.can_redeem ? '#fff' : undefined }">
+                  {{ formatAmount(p.redeem_points) }}
+                </span>
+              </div>
+              <div style="text-align:right">
+                <div v-if="p.can_redeem" style="font-size:11px;color:var(--red-600);font-weight:600">Pode resgatar!</div>
+                <div v-else>
+                  <div style="font-size:11px;color:var(--text-muted);margin-bottom:2px">Faltam</div>
+                  <span class="credits-pill">{{ formatAmount(p.missing) }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
