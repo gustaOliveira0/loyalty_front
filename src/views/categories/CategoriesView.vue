@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../../api/index.js'
+import { useAuthStore } from '../../stores/auth.js'
+const auth = useAuthStore()
 
 const categories = ref([])
 const loading = ref(true)
@@ -80,7 +82,7 @@ onMounted(load)
         <h2>Categorias</h2>
         <p>Organize seus produtos por categoria</p>
       </div>
-      <button class="btn btn-primary" @click="openCreate">
+      <button v-if="auth.can('can_manage_categories')" class="btn btn-primary" @click="openCreate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nova Categoria
       </button>
@@ -114,8 +116,8 @@ onMounted(load)
               <td><span class="badge badge-blue">{{ c.products_count }} produto{{ c.products_count !== 1 ? 's' : '' }}</span></td>
               <td>
                 <div class="action-group">
-                  <button class="btn btn-ghost btn-sm" @click="openEdit(c)">Editar</button>
-                  <button class="btn btn-danger btn-sm" @click="deleting = c; showDeleteModal = true">Remover</button>
+                  <button v-if="auth.can('can_manage_categories')" class="btn btn-ghost btn-sm" @click="openEdit(c)">Editar</button>
+                  <button v-if="auth.can('can_manage_categories')" class="btn btn-danger btn-sm" @click="deleting = c; showDeleteModal = true">Remover</button>
                 </div>
               </td>
             </tr>

@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../../api/index.js'
+import { useAuthStore } from '../../stores/auth.js'
+const auth = useAuthStore()
 
 const router = useRouter()
 const customers = ref([])
@@ -121,7 +123,7 @@ onMounted(load)
         <h2>Clientes</h2>
         <p>Gerencie clientes e veja o extrato de fidelidade</p>
       </div>
-      <button class="btn btn-primary" @click="openCreate">
+      <button v-if="auth.isAdmin" class="btn btn-primary" @click="openCreate">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Novo Cliente
       </button>
@@ -161,8 +163,8 @@ onMounted(load)
               <td>
                 <div class="action-group">
                   <button class="btn btn-ghost btn-sm" @click="viewStatement(c)">Extrato</button>
-                  <button class="btn btn-ghost btn-sm" @click="openEdit(c)">Editar</button>
-                  <button class="btn btn-danger btn-sm" @click="openDelete(c)">Remover</button>
+                  <button v-if="auth.can('can_edit_customers')" class="btn btn-ghost btn-sm" @click="openEdit(c)">Editar</button>
+                  <button v-if="auth.can('can_delete_customers')" class="btn btn-danger btn-sm" @click="openDelete(c)">Remover</button>
                 </div>
               </td>
             </tr>

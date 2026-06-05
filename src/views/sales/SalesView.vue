@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../../api/index.js'
+import { useAuthStore } from '../../stores/auth.js'
+const auth = useAuthStore()
 
 const sales = ref([])
 const customers = ref([])
@@ -139,7 +141,7 @@ onMounted(load)
         <h2>Vendas</h2>
         <p>Registre vendas e o cashback é creditado automaticamente</p>
       </div>
-      <button class="btn btn-primary" @click="openCreate" :disabled="products.length === 0 || customers.length === 0">
+      <button v-if="auth.can('can_create_sales')" class="btn btn-primary" @click="openCreate" :disabled="products.length === 0 || customers.length === 0">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
         Nova Venda
       </button>

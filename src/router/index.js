@@ -16,8 +16,10 @@ const routes = [
       { path: 'products', component: () => import('../views/products/ProductsView.vue') },
       { path: 'categories', component: () => import('../views/categories/CategoriesView.vue') },
       { path: 'credit-rules', component: () => import('../views/credit-rules/CreditRulesView.vue') },
-      { path: 'settings', component: () => import('../views/settings/StoreSettingsView.vue') },
+      { path: 'settings', component: () => import('../views/settings/StoreSettingsView.vue'), meta: { permission: 'can_manage_settings', adminAlwaysAllowed: true } },
       { path: 'qrcode', component: () => import('../views/qrcode/QRCodeView.vue') },
+      { path: 'collaborators', component: () => import('../views/collaborators/CollaboratorsView.vue'), meta: { adminOnly: true } },
+      { path: 'profile', component: () => import('../views/profile/ProfileView.vue'), meta: { adminOnly: true } },
     ]
   },
   { path: '/:pathMatch(.*)*', redirect: '/dashboard' }
@@ -31,6 +33,13 @@ export function navigationGuard(to) {
   const token = localStorage.getItem('token')
   if (!to.meta.public && !token) return '/login'
   if (to.meta.public && token && (to.path === '/login' || to.path === '/register')) return '/dashboard'
+
+  if (token && (to.meta.adminOnly || to.meta.permission)) {
+    const user = JSON.parse(localStorage.getItem('user') || 'null')
+    const isAdmin = user?.role !== 'collaborator'
+    if (to.meta.adminOnly && !isAdmin) return '/dashboard'
+    if (to.meta.permission && !isAdmin && !user?.permissions?.[to.meta.permission]) return '/dashboard'
+  }
 }
 
 router.beforeEach(navigationGuard)

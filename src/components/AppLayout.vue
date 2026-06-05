@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter, useRoute, RouterLink, RouterView } from 'vue-router'
+import { computed } from 'vue'
+import { ref } from 'vue'
+import { useRouter, useRoute, RouterView } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import IconNav from './IconNav.vue'
 
@@ -9,18 +10,26 @@ const route = useRoute()
 const auth = useAuthStore()
 const sidebarOpen = ref(false)
 
-const navItems = [
-  { label: 'Dashboard', path: '/dashboard', icon: 'grid' },
-  { label: 'Clientes', path: '/customers', icon: 'users' },
-  { label: 'Vendas', path: '/sales', icon: 'shopping-cart' },
-  { label: 'Produtos', path: '/products', icon: 'package' },
-  { label: 'Categorias', path: '/categories', icon: 'tag' },
-  { label: 'Configurações', path: '/settings', icon: 'star' },
-  { label: 'Meu QR Code', path: '/qrcode', icon: 'qrcode' },
+const allNavItems = [
+  { label: 'Dashboard',     path: '/dashboard',     icon: 'grid',          permission: 'can_view_dashboard' },
+  { label: 'Clientes',      path: '/customers',      icon: 'users' },
+  { label: 'Vendas',        path: '/sales',          icon: 'shopping-cart' },
+  { label: 'Produtos',      path: '/products',       icon: 'package' },
+  { label: 'Categorias',    path: '/categories',     icon: 'tag' },
+  { label: 'Configurações', path: '/settings',       icon: 'star',          adminOnly: true },
+  { label: 'Meu QR Code',  path: '/qrcode',         icon: 'qrcode',        adminOnly: true },
+  { label: 'Colaboradores', path: '/collaborators',  icon: 'users-admin',   adminOnly: true },
+  { label: 'Minha Conta',   path: '/profile',        icon: 'profile',       adminOnly: true },
 ]
 
+const navItems = computed(() => allNavItems.filter(item => {
+  if (item.adminOnly) return auth.isAdmin
+  if (item.permission) return auth.can(item.permission)
+  return true
+}))
+
 const pageTitle = computed(() => {
-  const item = navItems.find(n => route.path.startsWith(n.path))
+  const item = allNavItems.find(n => route.path.startsWith(n.path))
   return item?.label || 'Painel'
 })
 
@@ -50,12 +59,23 @@ function logout() {
         <p>Sistema de Pontos</p>
       </div>
 
-      <div class="sidebar-user">
+      <div
+        class="sidebar-user"
+        :class="{ 'sidebar-user--clickable': auth.isAdmin }"
+        @click="auth.isAdmin && navigate('/profile')"
+      >
         <div class="sidebar-avatar">{{ userInitials }}</div>
-        <div style="min-width:0">
+        <div style="min-width:0;flex:1">
           <div class="sidebar-user-name">{{ auth.user?.name }}</div>
           <div class="sidebar-user-email">{{ auth.user?.email }}</div>
+          <div v-if="!auth.isAdmin" style="font-size:.7rem;color:#c0392b;font-weight:600;margin-top:2px">Colaborador</div>
         </div>
+        <svg v-if="auth.isAdmin" class="sidebar-user-edit-icon"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
       </div>
 
       <nav class="sidebar-nav">
